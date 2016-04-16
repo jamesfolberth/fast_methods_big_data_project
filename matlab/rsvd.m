@@ -28,7 +28,12 @@ if nargin < 5
    q = 0;
 end
 
-Y = A*G(:,1:k+p);
+if isa(G, 'function_handle')
+   Y = G(A,k,p); % computes A*G with k+p samples
+else
+   Y = A*G(:,1:k+p);
+end
+
 [Q,~,~] = qr(Y, 0);          % economy QR
 
 for i = 1:q                  % power iterations
