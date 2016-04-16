@@ -1,13 +1,13 @@
 function [Phi] = bch_code_matrix(l,r,inds)
 % BCH_CODE_MATRIX  constructs a (subsampled) BCH code matrix
 % This function explicitly constructs a full BCH code matrix over {0,1}^l.
-% The length  must be chosen to form a valid pair from
-%   http://www.mathworks.com/help/comm/ref/bchenc.html
+% The length must be chosen to form a valid BCH pair.
 %
+% l should be 2^m-1 for some m <= 16.
 % Possible values of r can be found with T = bchnumerr(l), which lists
 % values of [l r t], where l is the code length, r is the message length, 
 % and t is the number of correctable errors.
-% There is no simple formula that enumerates l-r (see Lin + Costello).
+% There is no simple formula that enumerates l-r (see e.g. Lin + Costello).
 %
 % Inputs:  l     code length (should be 2^m-1 for some m <= 16)
 %          r     message length (must make a narrow-sense (l,r) BCH code)
@@ -18,11 +18,6 @@ function [Phi] = bch_code_matrix(l,r,inds)
 %                Entries are logical 0 or 1.
 %
 % Deps:    bchenc, bchnumerr from MATLAB Comms System Toolbox
-
-
-if r > 16
-   error('MATLAB''s BCH encoder only supports code lengths <= 2^16-1.  Choose r <= 16');
-end
 
 if nargin < 3
    inds = 0:2^r-1;
