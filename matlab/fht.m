@@ -44,6 +44,8 @@ function [Hx] = fht_rec(x, e, ordering)
       elseif e ==2
          Hx = [1 1 1 1; 1 -1 1 -1; 1 1 -1 -1; 1 -1 -1 1]*x;
       
+      %TODO do e == 3 special case?
+
       else
          Hx = zeros(size(x));
          half = pow2(e-1);

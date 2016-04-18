@@ -21,6 +21,7 @@ function [PHx] = srht(x, p, ordering)
 % Deps: signal/bitrevorder?
 
 %TODO handle other orderings (e.g. sequency)
+%TODO could port this to C and mex it (or at least srht_rec and split)
 
 if nargin < 3
    ordering = 'hadamard';
@@ -33,6 +34,7 @@ if ~bool && e >= 1
 end
 
 [inds, I] = sort(p(:), 1, 'ascend'); % sort p here for faster searching later
+                                     % this sort is a quicksort O(k*log(k)) avg. case
 Iinv(I) = 1:numel(I); % inverse permutation
 
 PHx = srht_rec(x, e, inds, ordering);
@@ -61,6 +63,8 @@ function [PHx] = srht_rec(x, e, p, ordering)
       elseif e ==2
          Hx = [1 1 1 1; 1 -1 1 -1; 1 1 -1 -1; 1 -1 -1 1]*x;
          PHx = Hx(p,:);
+
+      %TODO do e == 3 special case?
       
       else
          half = pow2(e-1);
