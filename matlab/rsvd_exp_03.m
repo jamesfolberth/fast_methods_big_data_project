@@ -49,25 +49,25 @@ for j = 1:numel(qvec)
    G = randn(n,l); 
 
 	% Gaussian with 0 power its
-   [U,D,V] = rsvd(A,k,p,G);
+   [U,D,V] = rsvd(A,k+p,k,G);
   	err_gauss(j)  = norm(A - U*D*V');
   	err_gauss_f(j) = norm(A - U*D*V','fro');
 	
 	% Gaussian with 1 power its
-  	[U,D,V]  = rsvd(A,k,p,G,1);
+  	[U,D,V]  = rsvd(A,k+p,k,G,1);
   	err_gauss_1(j)  = norm(A - U*D*V');
   	err_gauss_1_f(j) = norm(A - U*D*V','fro');
 
 	% Gaussian with 2 power its
-  	[U,D,V]  = rsvd(A,k,p,G,2);
+  	[U,D,V]  = rsvd(A,k+p,k,G,2);
   	err_gauss_2(j)  = norm(A - U*D*V');
   	err_gauss_2_f(j) = norm(A - U*D*V','fro');
 
    % Build dual BCH SCM sampler
-   G_dbch = @(A,k,p) dbch_sampler(A,k,p,q,t,rad,scm_sub(1:n));
+   G_dbch = @(A,l) dbch_sampler(A,l,q,t,rad,scm_sub(1:n));
 
 	% dual BCH with 0 power its
-   [U,D,V] = rsvd(A,k,p,G_dbch);
+   [U,D,V] = rsvd(A,k+p,k,G_dbch);
   	err_dbch(j)  = norm(A - U*D*V');
   	err_dbch_f(j) = norm(A - U*D*V','fro');
 	

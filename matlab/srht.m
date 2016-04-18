@@ -20,6 +20,7 @@ function [PHx] = srht(x, p, ordering)
 %
 % Deps: signal/bitrevorder?
 
+%TODO handle non-dyadic transform lengths (zero-pad)?
 %TODO handle other orderings (e.g. sequency)
 %TODO could port this to C and mex it (or at least srht_rec and split)
 
