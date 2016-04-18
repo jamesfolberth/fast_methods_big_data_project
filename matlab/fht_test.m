@@ -1,4 +1,4 @@
-function [] = fwht_test()
+function [] = fht_test()
 
 %rng(0);
 
@@ -10,7 +10,7 @@ tic
 Hx = fwht(x, 2^m, 'hadamard')*sqrt(2)^m; % natural ordering, normalize with 1/2, not 1/sqrt(2)
 toc
 tic
-myHx = myfwht(x);
+myHx = fht(x);
 toc
 
 %Hx
