@@ -1,0 +1,99 @@
+\documentclass[12pt]{article}
+
+
+% ========================================================================
+% preamble
+% ========================================================================
+
+% (stuff that you don't have to mess with or worry about right now.)
+%\setlength{\topmargin}{-.25in}
+%\setlength{\headheight}{0in}
+%\setlength{\headsep}{0in}
+%\setlength{\oddsidemargin}{-.3in}
+%\setlength{\textwidth}{7truein}
+%\setlength{\textheight}{10.0truein}
+
+% packages for fancy fonts, symbols, thm/proof environments, etc
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{mathrsfs}
+\usepackage[margin=1in]{geometry}
+
+
+%For the lazy:
+\newcommand{\ds}{\displaystyle}
+\newcommand{\tbf}{\textbf}
+\newcommand{\ti}{\textit}
+\newcommand{\mC}{\mathcal}
+\newcommand{\mB}{\mathbb}
+
+\newcommand{\mrm}{\mathrm}
+\newcommand{\dds}[2]{\frac{\mathrm{d}#2}{\mathrm{d}#1}} %(d1 BY d2)
+\newcommand{\ddb}[2]{\frac{\mathrm{d}}{\mathrm{d}#1}\left[ #2\right]}
+%(d by d1 OF 2)
+
+\begin{document}
+\flushleft
+
+\centerline{\large \bf APPM 5720 Final Project}
+\vspace{\baselineskip}
+{\large \centerline{James Folberth and Jessica Gronski}}
+\vspace{\baselineskip}
+
+\section{Introduction}
+In recent years, randomized techniques have gained a significant amount of attention for their simplicity and ability to efficiently generate low rank approximations of large matrices. We have discussed several randomized methods in class including the Subsampled Random Fourier and Hadamard Transforms (SRFT and SRHT, respectively). Ubaru et al. \cite{ubaru2015low} propose using error correcting codes to find low rank approximations and matrix factorizations of large matrices in a manner similar to SRFT/HT. The goal of our project is to compare their proposed method with those discussed in class for face recognition. 
+
+\section{Error Correcting Codes}
+In what follows, we give a brief overview of error correcting codes and the subspace embedding properties they satisfy. In communication systems, data are transmitted from a source (transmitter) to a destination (receiver) through physical channels. These channels are usually noisy, causing errors in the data received \cite{ubaru2015low}, and so error correcting codes were designed to help remedy this issue. BCH codes, named after  Bose, Chaudhuri, and Hocquenghem, are of specific importance for their rich structure, ability to correct multiple bit errors and ease of decoding a transmitted message. They form a class of cyclic codes; if \tbf{c} is a codeword in the linear code space $C$, then \tbf{$\tilde{c}$} is also in $C$ where \tbf{$\tilde{c}$} is a cyclic shift of \tbf{c}. 
+
+\vspace{3mm}
+
+A linear code $C$ can be represented by the codeword length $\ell$ and message length $r$.  For any two integers $t$ and $q$, a BCH code over the binary field $\mB{F}_2$ has length $\ell = 2^q - 1$ and dimension $r = 2^q - 1 - tq$. In order to encode a message of $r$ bits, we require $2^r$ unique code words and so $C$ has matrix dimension $2^r \times \ell$. Another feature of BCH codes is that any two codewords maintain a minimum distance of at least $2t + 1$, where we define distance as the number of positions at which the codes differ. Moreover, we can define the \ti{dual} of the code as a code of length $\ell' = 2^q - 1 = \ell$, dimension $r' = tq$ and minimum distance at least $2^{q-1} - (t -1)2^{q/2}$. The notion of a dual distance is of particular importance because a code matrix with dual distance greater than 4 will satisfy the Johnson-Lindenstrauss Transform (JLT) property and allow for an efficient subspace embedding. Therefore, for a fixed integer $q$ (fixed codeword length), the length of the message that can be transmitted through a channel efficiently depends on the value of $t$.
+
+\section{Subsampled Code Matrix}
+Let $A$ be an $m \times n$ matrix with approximate rank $k$. Similar to the randomized methods we've discussed in class, we would like to construct a lower dimensional subsampling matrix  $\Omega$ such that $Y = A \Omega $ provides a ``good" approximation for the column space of $A$. Ideally, the size of the subsampling matrix, i.e. the target rank, is much smaller than the dimension of the original matrix $A$, greatly reducing the cost of performing other factorizations like the QR or SVD on the subsampled matrix.
+
+\vspace{3mm}
+The question now is how do we construct an $\Omega$ from errorcorrecting codes  that still preserve the geometry of the original problem? We choose the length of the message vector $r \ge \lceil{\log_2n\rceil}$ and the length of the codewords $l > k$, the target rank. Notice that $l$ will depend on the dual distance of the code. We then consider the linear coding scheme as follows: 
+
+\[ \Omega = \sqrt{ \frac{ 2^r }{ \ell } } D S \Phi, \] 
+
+where 
+\begin{itemize}
+\item $D$ is a random $n \times n$ diagonal matrix whose entries are independent random signs, i.e., random variables uniformly distributed on $\{ \pm 1 \}$.
+
+\item $S$ is a uniformly random downsampler, an $n \times 2^r$ matrix whose $n$ rows are randomly selected from a $2^r \times 2^r$ identity matrix.
+
+\item $\Phi$ is the $2^r \times \ell$ coding matrix, generated using an $[ \ell, r]$-linear coding scheme, with a binary phase-shift keying (BPSK) mapping and scaled by $2^{-r/2}$ such that all columns have unit norm.
+
+\end{itemize}
+Recall that the codeword matrix $C$ has $2^r$ codewords each of length $\ell$, i.e. a set of $2^r$ vectors in $\{0,1\}^{\ell}$. The BPSK mapping is defined as follows: given a codeword $\tbf{c} \in C$, $\tbf{c} \mapsto \phi \in \mB{R}$ by assigning $1 \rightarrow \frac{-1}{\sqrt{2^r}}$ and $0 \rightarrow \frac{1}{\sqrt{2^r}}$. This way, we transform the binary code matrix $C$ to the code matrix $\Phi = (\phi_1^T,  \hdots \phi_{2^r}^T) ^T$ \cite{ubaru2015low}. Moreover, it can be shown that if the dual distance is greater than or equal to 3, $\Phi$ will have orthonormal columns. The scaling factor $\sqrt{\frac{2^r}{\ell}}$ enforces the rows of $\Omega$ to also have unit length.
+
+\section{Prototype Algorithm}
+The algorithm provided by Ubaru et al. in \cite{ubaru2015low} 
+
+
+
+ \bibliography{final_bib}
+ \bibliographystyle{plain}
+ 
+\end{document} % every document must end with this.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

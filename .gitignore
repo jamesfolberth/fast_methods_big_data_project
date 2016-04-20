@@ -1,2 +1,8 @@
 papers/
 matlab/figures/*
+report/*.aux
+report/*.bbl
+report/*.blg
+report/*.log
+report/*.synctex.gz
+report/*.pdf
