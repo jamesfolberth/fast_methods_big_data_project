@@ -6,7 +6,7 @@ function [] = srht_test()
 %x = (1:2^m).';
 %P = (2^m:-1:1).';
 
-m = randi([1 16])
+m = randi([1 17])
 x = randn(2^m, randi([1 100]));
 k = randi([1 max(1,2^(m-2))])
 p = randperm(2^m); p = p(1:k);
