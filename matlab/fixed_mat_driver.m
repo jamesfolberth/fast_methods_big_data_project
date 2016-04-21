@@ -6,18 +6,18 @@ rng(1);
 %l = 31;
 %errs = comparison_01(A,l,l,5);
 
-%m = 100;
-%n = 140;
-%p = 5;
-%%A = LOCAL_fast_decay(m,n,200);
-%A = LOCAL_slow_decay(m,n);
-%l = 31;
-%errs = comparison_01(A,l,l-p,5);
+m = 100;
+n = 140;
+p = 5;
+%A = LOCAL_fast_decay(m,n,200);
+A = LOCAL_slow_decay(m,n);
+l = 31;
+errs = comparison_01(A,l,l-p,5);
 
 % Kohonen
-A = load_mat(0);
-l = 511;
-errs = comparison_01(A,l,l-5,ceil(log2(l)))
+%A = load_mat(0);
+%l = 511;
+%errs = comparison_01(A,l,l-5,ceil(log2(l)))
 
 
 end
