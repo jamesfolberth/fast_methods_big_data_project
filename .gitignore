@@ -1,5 +1,8 @@
 papers/
 
+*.o
+*.so
+
 matlab/figures/*
 matlab/*.out
 

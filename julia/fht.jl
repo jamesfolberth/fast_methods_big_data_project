@@ -1,5 +1,15 @@
-using ArrayViews
-using Base.LinAlg.BLAS: axpy!
+# julia> versioninfo()
+# Julia Version 0.4.4
+# Commit ae683af* (2016-03-15 15:43 UTC)
+# Platform Info:
+#   System: Linux (x86_64-unknown-linux-gnu)
+#   CPU: Intel(R) Core(TM) i5-2467M CPU @ 1.60GHz
+#   WORD_SIZE: 64
+#   BLAS: libmkl_rt
+#   LAPACK: libmkl_rt
+#   LIBM: libimf
+#   LLVM: libLLVM-3.3
+
 
 """
 Hx = fht(x, ordering)
@@ -134,6 +144,49 @@ function fht_rec!{T<:Number}(pHx::Ptr{T}, px::Ptr{T}, m::Integer, n::Integer,
    #return Hx
 end
 
+# Call C for recursive bit
+function fht_C(x::DenseArray{Float64}, ordering::AbstractString="hadamard")
+
+   if ndims(x) < 1 || ndims(x) > 2
+      error("fht.jl: fht only works on vectors and matrices for now.");
+   end
+   
+   (m,n) = size(x,1,2)
+
+   if !ispow2(m)
+      error(string("fht.jl: Invalid transform length.  Transform dimensions ",
+         "should be powers of 2.  You can zero-pad to the next power of 2."))
+   end
+   L = Int64(round(log2(m)))
+   
+   Hx = zeros(x)
+   if ordering == "hadamard" || ordering == "natural"
+      pHx = pointer(Hx)
+      px = pointer(x)
+      um = UInt32(m)
+      un = UInt32(n)
+      ustart = UInt32(0) # these are C inds
+      ustop = UInt32(m-1)
+      uL = UInt32(L)
+      
+      ccall((:fht_rec_had_1, "./fht.so"), Void,
+         (Ref{Float64}, Ref{Float64}, UInt32, UInt32, UInt32, UInt32, UInt32),
+         pHx, px, um, un, ustart, ustop, uL)
+      
+   elseif ordering == "sequency"
+      error("fht.jl:fht_rec: sequency order not implemented.")
+
+   else
+      error("fht.jl:fht_rec:  unsupported ordering: $(ordering)")
+
+   end
+ 
+   Hx /= sqrt(2)^L
+
+   return Hx
+end
+
+
 # reference implementation used for testing (temporary)
 # {{{
 function fht_ref{T<:Number}(x::StridedArray{T}, ordering::AbstractString="hadamard")
@@ -194,6 +247,7 @@ function fht_rec_ref{T<:Number}(x::StridedArray{T}, L::Integer, ordering::Abstra
 end
 # }}}
 
+
 # A simple test function used for development
 function fht_test()
 
@@ -221,17 +275,20 @@ function fht_test()
 	#display(Hx)
    #display(myHx)
       
-   m = 14
-   #x = collect(1:2^m)
+   m = 16
+   x = Array{Float64}(collect(1:2^m))
    #m = rand(1:16)
-   x = randn(2^m,30)
+   #x = randn(2^m,30)
    println(size(x))
    @time Hx = fht_ref(x)
    @time myHx = fht(x)
+   @time Hx_C = fht_C(x)
    
    #display(Hx)
    #display(myHx)
-   @printf "norm(Hx - myHx,2) = %e" norm(Hx - myHx,2)
+   #display(Hx_C)
+   @printf "norm(Hx - myHx,2) = %e\n" norm(Hx - myHx,2)
+   @printf "norm(Hx - Hx_C,2) = %e\n" norm(Hx - Hx_C,2)
 
 end
 
