@@ -42,47 +42,12 @@ function fht{T<:Number}(x::StridedArray{T}, ordering::AbstractString="hadamard")
 end
 
 
-#TODO get sensible templating going on
-#TODO should make a C+BLAS version
-#function fht_rec!{T<:Number}(Hx::DenseArray{T}, x::DenseArray{T},
-#      start::Integer, stop::Integer, L::Integer, ordering::AbstractString)
 function fht_rec!{T<:Number}(pHx::Ptr{T}, px::Ptr{T}, m::Integer, n::Integer,
       start::Integer, stop::Integer, L::Integer, ordering::AbstractString)
-   
-   #(m,n) = size(x,1,2)
    
    if ordering == "hadamard" || ordering == "natural"
 
       if L >= 2
-         # a more natural implementation
-         #Hx = zeros(size(x))
-         #half = 2<<(L-2) # 2^(L-1)
-         #x1 = x[1:half,:]
-         #x2 = x[half+1:2*half,:]
-         #Hx1 = fht_rec(x1, L-1, ordering)
-         #Hx2 = fht_rec(x2, L-1, ordering)
-         #Hx[1:half,:] = Hx1 + Hx2
-         #Hx[half+1:2*half,:] = Hx1 - Hx2
-         
-         #half = 2<<(L-2) # 2^(L-1)
-         #mid = start+half-1
-         #fht_rec!(Hx, x, start, mid, L-1, ordering)
-         #fht_rec!(Hx, x, mid+1, stop, L-1, ordering)
-         #Hx[start:mid,:] += Hx[mid+1:stop,:]
-         ##axpy!(T(1), Hx[mid+1:stop,:], Hx[start:mid,:])
-         #Hx[mid+1:stop,:] = Hx[start:mid,:] - 2*Hx[mid+1:stop,:]
-         
-         # doesn't work
-         #half = 2<<(L-2) # 2^(L-1)
-         #x1 = view(x, 1:half, :)
-         #x2 = view(x, half+1:2*half, :)
-         #Hx1 = view(Hx, 1:half, :)
-         #Hx2 = view(Hx, half+1:2*half, :)
-         #fht_rec!(Hx1, x1, 1, 1, L-1, ordering)
-         #fht_rec!(Hx2, x2, 1, 1, L-1, ordering)
-         #Hx1 += Hx2
-         #Hx2 *= T(-2)
-         #Hx2 += Hx1
          
          half = 2<<(L-2) # 2^(L-1)
          mid = start+half-1
@@ -101,7 +66,6 @@ function fht_rec!{T<:Number}(pHx::Ptr{T}, px::Ptr{T}, m::Integer, n::Integer,
                
       elseif L == 2
          #Hx[start:stop,:] = [1 1 1 1; 1 -1 1 -1; 1 1 -1 -1; 1 -1 -1 1]*x[start:stop,:];
-         #Hx = [1 1 1 1; 1 -1 1 -1; 1 1 -1 -1; 1 -1 -1 1]*x
 
          @inbounds @simd for j in 0:n-1
             jm = j*m + start
@@ -118,11 +82,8 @@ function fht_rec!{T<:Number}(pHx::Ptr{T}, px::Ptr{T}, m::Integer, n::Integer,
       elseif L == 1
          #Hx[start,:] = x[start,:] + x[stop,:]
          #Hx[stop,:] = x[start,:] - x[stop,:]
-         #Hx = [1 1; 1 -1]*x;
  
          @inbounds @simd for j in 0:n-1
-            #Hx[start,j] = x[start,j] + x[stop,j]
-            #Hx[stop,j] = x[start,j] - x[stop,j]
             jm = j*m
             unsafe_store!(pHx, unsafe_load(px, jm+start) + unsafe_load(px, jm+stop), jm+start)
             unsafe_store!(pHx, unsafe_load(px, jm+start) - unsafe_load(px, jm+stop), jm+stop)
@@ -141,7 +102,6 @@ function fht_rec!{T<:Number}(pHx::Ptr{T}, px::Ptr{T}, m::Integer, n::Integer,
 
    end
    
-   #return Hx
 end
 
 # Call C for recursive bit
@@ -187,8 +147,8 @@ function fht_C(x::DenseArray{Float64}, ordering::AbstractString="hadamard")
 end
 
 
-# reference implementation used for testing (temporary)
-# {{{
+# reference implementation used for testing
+# this is perhaps the most natural implementation of Ailon+Liberty, 2010.
 function fht_ref{T<:Number}(x::StridedArray{T}, ordering::AbstractString="hadamard")
   
    if ndims(x) < 1 || ndims(x) > 2
@@ -245,7 +205,6 @@ function fht_rec_ref{T<:Number}(x::StridedArray{T}, L::Integer, ordering::Abstra
    
    return Hx
 end
-# }}}
 
 
 # A simple test function used for development
@@ -276,14 +235,14 @@ function fht_test()
    #display(myHx)
       
    m = 16
-   x = Array{Float64}(collect(1:2^m))
+   #x = Array{Float64}(collect(1:2^m))
    #m = rand(1:16)
-   #x = randn(2^m,30)
+   x = randn(2^m,30)
    println(size(x))
    @time Hx = fht_ref(x)
    @time myHx = fht(x)
    @time Hx_C = fht_C(x)
-   
+
    #display(Hx)
    #display(myHx)
    #display(Hx_C)
@@ -292,6 +251,33 @@ function fht_test()
 
 end
 
+function fht_timing()
+   seed = 0;
+   println("seed = $(seed)");
+   srand(seed);
+
+   m = 20
+   x = randn(2^m,1)
+   println(size(x))
+   
+   n_samples = 10
+   t_ref = 0.0
+   t = 0.0
+   t_C = 0.0
+   for i=1:n_samples
+      time = @timed Hx = fht_ref(x)
+      t_ref += time[2];
+      time = @timed myHx = fht(x)
+      t += time[2];
+      time = @timed Hx_C = fht_C(x)
+      t_C += time[2];
+   end
+
+   @printf "<t_ref> = %f\n" t_ref / n_samples
+   @printf "<t>     = %f\n" t / n_samples
+   @printf "<t_C>   = %f\n" t_C / n_samples
+
+end
 
 #vim: set noet:
 
