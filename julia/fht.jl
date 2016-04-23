@@ -169,7 +169,7 @@ function fht_C(x::DenseArray{Float64}, ordering::AbstractString="hadamard")
       ustop = UInt32(m-1)
       uL = UInt32(L)
       
-      ccall((:fht_rec_had_1, "./fht.so"), Void,
+      ccall((:fht_rec_had, "./fht.so"), Void,
          (Ref{Float64}, Ref{Float64}, UInt32, UInt32, UInt32, UInt32, UInt32),
          pHx, px, um, un, ustart, ustop, uL)
       

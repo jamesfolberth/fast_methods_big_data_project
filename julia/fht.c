@@ -4,18 +4,13 @@
 #include <stdio.h>
 #include <string.h>
 
-// use MKL? (be sure to compile and link appropriately)
-#define USE_MKL 0
-#if USE_MKL
-   #include "mkl.h"
+// use SIMD? (be sure to compile and link appropriately)
+#define USE_SIMD 1
+#if USE_SIMD
+   #include <x86intrin.h> 
 #endif
 
-//// use SIMD? (be sure to compile and link appropriately)
-//#define USE_SIMD 1
-//#if USE_SIMD
-//#endif
-
-void fht_rec_had_1(double *Hx, const double *x, const unsigned m, const unsigned n,
+void fht_rec_had(double *Hx, const double *x, const unsigned m, const unsigned n,
       unsigned start, unsigned stop, unsigned L)
 {
 
@@ -27,17 +22,34 @@ void fht_rec_had_1(double *Hx, const double *x, const unsigned m, const unsigned
       
       half = 2<<(L-2); // 2^(L-1)
       mid = start+half-1;
-      fht_rec_had_1(Hx, x, m, n, start, mid, L-1);
-      fht_rec_had_1(Hx, x, m, n, mid+1, stop, L-1);
-      
-      if (USE_MKL) {
-         // Probably won't gain much from MKL here... 
+      fht_rec_had(Hx, x, m, n, start, mid, L-1);
+      fht_rec_had(Hx, x, m, n, mid+1, stop, L-1);
 
-         // A bogus test call to MKL's BLAS
-         //int N = m*n, incx = 1;
-         //double alpha = 2;
-         //dscal(&N, &alpha, Hx, &incx);
+      // Loop with SIMD to do Hx1 <- Hx1 + Hx2
+      //                      Hx2 <- Hx1 - Hx2
+      if (USE_SIMD) {
+         __m128d Hx1v,Hx2v, tmp1, tmp2;
 
+         __m128d neg_one;
+         neg_one = _mm_set_pd1(-1.0);
+
+         for (j = 0; j < n; ++j) {
+            jm = j*m + start;
+            //Hx_jm = Hx + j*m + start; //TODO test aliasing to make it faster?
+            
+            // we know that half is divisible by 2
+            for (i=0; i < half; i+=2) {
+               tmp1 = _mm_load_pd(Hx+jm+i);
+               tmp2 = _mm_load_pd(Hx+jm+i+half);
+               
+               Hx1v = _mm_add_pd(tmp1, tmp2); // Hx1 + Hx2
+               tmp2 = _mm_mul_pd(neg_one, tmp2);
+               Hx2v = _mm_add_pd(tmp1, tmp2); // Hx1 - Hx2
+               
+               _mm_store_pd(Hx+jm+i, Hx1v);
+               _mm_store_pd(Hx+jm+i+half, Hx2v);
+            }
+         }
       }
 
       // Simple loop to do Hx1 <- Hx1 + Hx2

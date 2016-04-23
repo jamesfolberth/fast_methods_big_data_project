@@ -9,6 +9,12 @@ LDLIBS= -lc
 #LDFLAGS= 
 #LDLIBS= -lc -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl
 
+# These are for James' laptop
+CFLAGS=-Wall -fPIC -O2 -msse2 -march=native
+LDFLAGS= 
+LDLIBS= -lc
+
+
 .PHONY: all clean
 
 all: fht.so
