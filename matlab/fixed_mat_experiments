@@ -85,8 +85,12 @@ deter3
 l = 127
 p = 5
 n_samples = 25 (for stats)
-TODO
-Matlab's parallel pool kept dying...
+Simple Error Stats:
+svds:        5.749995e+00 +- 9.064933e-16
+Gaussian:    9.227448e+00 +- 1.121378e-01
+dual BCH:    9.242724e+00 +- 7.506569e-02
+SRFT:        9.248960e+00 +- 6.500734e-02
+SRHT:        9.234919e+00 +- 2.251083e-01
 
 
 +++++++++++++++++++++++++++++++++++++++++
@@ -166,6 +170,12 @@ deter3
 =========================================
 l = 127
 n_samples = 25 (for stats)
+Simple Error Stats:
+svds:        5.749911e+00 +- 1.812987e-15
+Gaussian:    9.226068e+00 +- 1.125588e-01
+dual BCH:    9.241467e+00 +- 7.529261e-02
+SRFT:        9.247945e+00 +- 6.497679e-02
+SRHT:        9.231561e+00 +- 2.339258e-01
 
 
 

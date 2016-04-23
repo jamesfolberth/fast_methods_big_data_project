@@ -1,5 +1,8 @@
 papers/
+
 matlab/figures/*
+matlab/*.out
+
 report/*.aux
 report/*.bbl
 report/*.blg

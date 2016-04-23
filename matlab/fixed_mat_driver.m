@@ -15,8 +15,8 @@ function [] = fixed_mat_driver();
 %errs = comparison_01(A,l,l-p,5);
 
 % Kohonen
-%A = load_mat(0);
-%l = 511;
+A = load_mat(0);
+l = 511;
 
 % EPA
 %A = load_mat(1);
@@ -36,12 +36,12 @@ function [] = fixed_mat_driver();
 %l = 63;
 
 % deter3
-A = load_mat(5); % I have issues running this with parfor
-l = 127;
+%A = load_mat(5); % I have issues running this with parfor
+%l = 127;
 
 n_samples = 25;
 errs = zeros(5,n_samples);
-for i=1:n_samples
+parfor i=1:n_samples
    %errs(:,i) = comparison_01(A,l,l-5,ceil(log2(l)));
    errs(:,i) = comparison_02(A,l,ceil(log2(l)));
 end
