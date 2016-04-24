@@ -90,7 +90,7 @@ function fht_rec!{T<:Number}(pHx::Ptr{T}, px::Ptr{T}, m::Integer, n::Integer,
          end
          
       elseif L < 1
-         error(string("fht.jl:fht_rec: Invalide transform length.  Transform ",
+         error(string("fht.jl:fht_rec: Invalid transform length.  Transform ",
             "dimensions should be positive powers of 2."))
       end
 
@@ -98,7 +98,7 @@ function fht_rec!{T<:Number}(pHx::Ptr{T}, px::Ptr{T}, m::Integer, n::Integer,
       error("fht.jl:fht_rec: sequency order not implemented.")
 
    else
-      error("fht.jl:fht_rec:  unsupported ordering: $(ordering)")
+      error("fht.jl:fht_rec: unsupported ordering: $(ordering)")
 
    end
    
@@ -137,7 +137,7 @@ function fht_C(x::DenseArray{Float64}, ordering::AbstractString="hadamard")
       error("fht.jl:fht_rec: sequency order not implemented.")
 
    else
-      error("fht.jl:fht_rec:  unsupported ordering: $(ordering)")
+      error("fht.jl:fht_rec: unsupported ordering: $(ordering)")
 
    end
  
@@ -191,7 +191,7 @@ function fht_rec_ref{T<:Number}(x::StridedArray{T}, L::Integer, ordering::Abstra
          Hx = [1 1; 1 -1]*x;
          
       elseif L < 1
-         error(string("fht.jl:fht_rec: Invalide transform length.  Transform ",
+         error(string("fht.jl:fht_rec: Invalid transform length.  Transform ",
             "dimensions should be positive powers of 2."))
       end
 
@@ -199,7 +199,7 @@ function fht_rec_ref{T<:Number}(x::StridedArray{T}, L::Integer, ordering::Abstra
       error("fht.jl:fht_rec: sequency order not implemented.")
 
    else
-      error("fht.jl:fht_rec:  unsupported ordering: $(ordering)")
+      error("fht.jl:fht_rec: unsupported ordering: $(ordering)")
 
    end
    

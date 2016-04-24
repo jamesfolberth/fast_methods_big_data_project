@@ -73,6 +73,7 @@ function [PHx] = srht_rec(x, e, p, ordering)
          k1 = numel(p1); k2 = numel(p2);
 
          x1 = x(1:half,:); % don't know if recursion will pass by reference or copy... prolly by ref
+                           % BUT SLICING MAKES A COPY!
          x2 = x(half+1:2*half,:);
          
          % modify p2 so indexing on next level down matches up with length of x1, x2
