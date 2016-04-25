@@ -40,4 +40,4 @@ srht.so: srht.o
 
 clean:
 	rm -f *.o
-	rm -f fht.so srht.so
+	rm -f fht.so srht.so main

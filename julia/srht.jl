@@ -692,7 +692,7 @@ function srht_timing()
    p = randperm(2^m)[1:k] # so this is one thing matlab does better...
    println([2^m k])
 
-   n_samples = 50
+   n_samples = 250
    t_fht_C = zeros(n_samples,1);
    t_ref = zeros(n_samples,1);
    t_C = zeros(n_samples,1);

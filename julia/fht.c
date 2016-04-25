@@ -15,7 +15,7 @@ void fht_rec_had(double *Hx, const double *x, const unsigned m, const unsigned n
 
    static unsigned j,jm;
    
-   if ( L >= 3 ) { 
+   if ( L >= 4 ) { 
       static unsigned i;
       unsigned half, mid; // can't be static!
       
@@ -65,6 +65,26 @@ void fht_rec_had(double *Hx, const double *x, const unsigned m, const unsigned n
 
    }
 
+   else if ( L == 3 ) {
+      for (j = 0; j < n; ++j) {
+         jm = j*m + start;
+         static double x0,x1,x2,x3,x4,x5,x6,x7;
+         x0 = x[jm+0]; x1 = x[jm+1];
+         x2 = x[jm+2]; x3 = x[jm+3];
+         x4 = x[jm+4]; x5 = x[jm+5];
+         x6 = x[jm+6]; x7 = x[jm+7];
+
+         Hx[jm+0] = x0+x1+x2+x3+x4+x5+x6+x7;
+         Hx[jm+1] = x0-x1+x2-x3+x4-x5+x6-x7;
+         Hx[jm+2] = x0+x1-x2-x3+x4+x5-x6-x7;
+         Hx[jm+3] = x0-x1-x2+x3+x4-x5-x6+x7;
+         Hx[jm+4] = x0+x1+x2+x3-x4-x5-x6-x7;
+         Hx[jm+5] = x0-x1+x2-x3-x4+x5-x6+x7;
+         Hx[jm+6] = x0+x1-x2-x3-x4-x5+x6+x7;
+         Hx[jm+7] = x0-x1-x2+x3-x4+x5+x6-x7;
+      }
+   }
+
    else if ( L == 2 ) {
       for (j = 0; j < n; ++j) {
          jm = j*m + start;
@@ -88,7 +108,7 @@ void fht_rec_had(double *Hx, const double *x, const unsigned m, const unsigned n
    }
 
    else {
-      printf("L went bad!\n");
+      printf("L went bad: L = %d\n", L);
       exit(-1);
    }
 
