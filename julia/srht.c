@@ -88,7 +88,8 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
    }
 
    else if ( L == 2 ) {
-      static double x0, x1, x2, x3; //TODO profile the static part
+      static double x0, x1, x2, x3;
+      static double Hx[4];
       static unsigned p_ptr, jm, jl;
 
       for ( j=0; j<n; ++j ) {
@@ -99,47 +100,44 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
          x2 = x[jm+2];
          x3 = x[jm+3];
          
+         // transform values
+         // TODO is there any SIMD we can do here?
+         Hx[0] = x0+x1+x2+x3;
+         Hx[1] = x0-x1+x2-x3;
+         Hx[2] = x0+x1-x2-x3;
+         Hx[3] = x0-x1-x2+x3;
+         
+         // subsample
          p_ptr = pstart;
-         //printf("len_p = %d\n", len_p);
-         for ( i=0; i < len_p; ++i ) { //TODO lots of decisions in this inner loop...
-                                       //     Set x0,...,x3 equal to transform values, then
-                                       //     play p_ptr games to add in the right one to the
-                                       //     right spot?
-            //printf("p_ptr = %d, len_p = %d\n", p_ptr, len_p);
-            //printf("pinds[i] = %d\n", pinds[i]); 
-            
-            //printf("jl+p_ptr = %d\n", jl+p_ptr);
-
-            if ( pinds[i] == 0 ) {
-               pPHx[jl+p_ptr] = x0+x1+x2+x3;
-               //printf("I'm here: 0\n");
-               p_ptr += 1;
-            }
-
-            else if ( pinds[i] == 1 ) {
-               pPHx[jl+p_ptr] = x0-x1+x2-x3;
-               //printf("I'm here: 1\n");
-               p_ptr += 1;
-            }
-
-            else if ( pinds[i] == 2 ) {
-               pPHx[jl+p_ptr] = x0+x1-x2-x3;
-               //printf("I'm here: 2\n");
-               p_ptr += 1;
-            }
-
-            else if ( pinds[i] == 3 ) {
-               pPHx[jl+p_ptr] = x0-x1-x2+x3;
-               //printf("I'm here: 3\n");
-               p_ptr += 1;
-            }
+         for ( i=0; i<len_p; ++i ) {
+            pPHx[jl+p_ptr] = Hx[pinds[i]];
+            p_ptr += 1;
          }
       }
    }
 
    else if ( L == 1 ) {
-      printf("L = 1 NOT IMPLEMENTED\n");
-      exit(-1);
+      static double x0, x1;
+      static double Hx[2];
+      static unsigned p_ptr, jm, jl;
+
+      for ( j=0; j<n; ++j ) {
+         jm = j*m;
+         jl = j*len_inds_full;
+         x0 = x[jm];
+         x1 = x[jm+1];
+         
+         // transform values
+         Hx[0] = x0+x1;
+         Hx[1] = x0-x1;
+         
+         // subsample
+         p_ptr = pstart;
+         for ( i=0; i<len_p; ++i ) {
+            pPHx[jl+p_ptr] = Hx[pinds[i]];
+            p_ptr += 1;
+         }
+      }
    }
 
    else {

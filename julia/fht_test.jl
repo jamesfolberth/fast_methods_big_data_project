@@ -5,4 +5,5 @@
 
 include("srht.jl")
 srht_test()
+srht_timing()
 

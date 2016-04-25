@@ -644,9 +644,9 @@ function srht_test()
    
    include("fht.jl")
 
-   #seed = 0;
-   #println("seed = $(seed)");
-   #srand(seed);
+   seed = 0;
+   println("seed = $(seed)");
+   srand(seed);
 
    #m = 3
    #x = Array{Float64}(collect(1:2^m))
@@ -681,3 +681,40 @@ function srht_test()
    @printf "norm(PHx_naive - PHx_C,2) = %e\n" vecnorm(PHx_naive - PHx_C)
 
 end
+
+function srht_timing()
+   seed = 0;
+   println("seed = $(seed)");
+   srand(seed);
+
+   m = 14
+   x = randn(2^m, 30)
+   k = rand(1:2^m)
+   p = randperm(2^m)[1:k] # so this is one thing matlab does better...
+   println([2^m k])
+
+   n_samples = 10
+   t_fht_C = 0.0
+   t_ref = 0.0
+   t_C = 0.0
+   for i=1:n_samples
+      time = @timed begin
+         Hx = fht_C(x)
+         PHx = Hx[p,:]
+      end
+      t_fht_C += time[2];
+
+      time = @timed PHx_ref = srht_ref(x, p)
+      t_ref += time[2];
+
+      time = @timed PHx_C = srht_C(x, p)
+      t_C += time[2];
+   end
+
+   @printf "<t_fht_C> = %f\n" t_fht_C / n_samples
+   @printf "<t_ref>   = %f\n" t_ref / n_samples
+   @printf "<t_C>     = %f\n" t_C / n_samples
+
+end
+
+
