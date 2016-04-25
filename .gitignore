@@ -3,6 +3,8 @@ papers/
 *.o
 *.so
 
+julia/main
+
 matlab/figures/*
 matlab/*.out
 

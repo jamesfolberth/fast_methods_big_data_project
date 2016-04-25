@@ -15,12 +15,15 @@
 # These are for James' laptop
 CFLAGS=-Wall -fPIC -O2 -msse2 -march=native
 LDFLAGS= 
-LDLIBS= -lc
+LDLIBS= -lc -lm
 
 
 .PHONY: all clean
 
-all: fht.so
+all: fht.so srht.so
+
+main: srht.c 
+	gcc -lc -lm -g -o main srht.c
 
 fht.o: fht.c
 	gcc $(CFLAGS) $(LDLIBS) $(LDFLAGS) -c $<
@@ -28,6 +31,13 @@ fht.o: fht.c
 fht.so: fht.o
 	ld -shared $< -o $@ -fPIC $(LDLIBS) $(LDFLAGS)
 
+srht.o: srht.c
+	gcc $(CFLAGS) $(LDLIBS) $(LDFLAGS) -c $<
+
+srht.so: srht.o
+	ld -shared $< -o $@ -fPIC $(LDLIBS) $(LDFLAGS)
+
+
 clean:
 	rm -f *.o
-	rm -f fht.so
+	rm -f fht.so srht.so
