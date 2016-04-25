@@ -4,8 +4,8 @@
 #include <math.h>
 
 // use SIMD? (be sure to compile and link appropriately)
-#define USE_SIMD 0
-#if USE_SIMD
+#define USE_SSE 1
+#if USE_SSE
    #include <x86intrin.h> 
 #endif
 
@@ -20,6 +20,8 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
 
    static unsigned j,i;
 
+   //printf("L = %d\n", L);
+
    if ( L >= 3 ) {
       unsigned half, jhalf;
       unsigned mp, *p1, k1, *p2, k2;
@@ -29,18 +31,32 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
       split(pinds, len_p, half-1, &mp, &p1, &k1, &p2, &k2);
 
       //printf("k1 = %d, k2 = %d\n", k1, k2);
-
-      double *tmp = malloc(half*n*sizeof(double));
+      
+      #if(USE_SSE)
+      //TODO should we use posix_memalign?
+      double *tmp = _mm_malloc(half*n*sizeof(*tmp), 16);
+      #else
+      double *tmp = malloc(half*n*sizeof(*tmp));
+      #endif
       if ( tmp == NULL ) {
          printf("srht.c: memory error.\n"); exit(-1);
       }
-      
-      //TODO (inline) function?
-      #if(USE_SIMD) 
+
+      #if(USE_SSE) 
       // tmp = x1 + x2 with SIMD
-      // half is always a factor of 2 (or 4), so no cleanup
-      printf("SIMD NOT IMPLEMENTED\n");
-      exit(-1);
+      // half is always a factor of 4, so no cleanup
+      // Julia arrays are 16 byte aligned (not 32), so must use AVX unaligned load, which
+      // slows things down a bit.  
+      static __m128d x1v, x2v, tmpv;
+      for ( j=0; j<n; ++j ) {
+         jhalf = j*half;
+         for ( i=0; i<half; i+=2 ) {
+            x1v = _mm_load_pd(x+2*jhalf+i); 
+            x2v = _mm_load_pd(x+2*jhalf+i+half); 
+            tmpv = _mm_add_pd(x1v, x2v);
+            _mm_store_pd(tmp+jhalf+i, tmpv);
+         }
+      }
 
       #else
       // tmp = x1 + x2 with a simple loop
@@ -56,12 +72,18 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
          srht_rec_had(pPHx, tmp, half, n, L-1, p1, k1, len_inds_full, pstart);
       }
       
-      //TODO (inline) function?
-      #if(USE_SIMD) 
+      #if(USE_SSE) 
       // tmp = x1 - x2 with SIMD
-      // half is always a factor of 2 (or 4), so no cleanup
-      printf("SIMD NOT IMPLEMENTED\n");
-      exit(-1);
+      // half is always a factor of 4, so no cleanup
+      for ( j=0; j<n; ++j ) {
+         jhalf = j*half;
+         for ( i=0; i<half; i+=2 ) {
+            x1v = _mm_load_pd(x+2*jhalf+i); 
+            x2v = _mm_load_pd(x+2*jhalf+i+half); 
+            tmpv = _mm_sub_pd(x1v, x2v);
+            _mm_store_pd(tmp+jhalf+i, tmpv);
+         }
+      }
 
       #else
       // tmp = x1 - x2 with a simple loop
@@ -82,9 +104,13 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
          srht_rec_had(pPHx, tmp, half, n, L-1, p2, k2, len_inds_full, pstart+k1);
       }
 
-      free(p1);
-      free(p2);
+      free(p1); free(p2);
+      
+      #if(USE_SSE)
+      _mm_free(tmp);
+      #else
       free(tmp);
+      #endif
    }
 
    else if ( L == 2 ) {
@@ -102,6 +128,7 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
          
          // transform values
          // TODO is there any SIMD we can do here?
+         // _mm256_addsub_pd?
          Hx[0] = x0+x1+x2+x3;
          Hx[1] = x0-x1+x2-x3;
          Hx[2] = x0+x1-x2-x3;

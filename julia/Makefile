@@ -11,9 +11,9 @@
 #LDFLAGS= 
 #LDLIBS= -lc -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl
 
-# SIMD
-# These are for James' laptop
-CFLAGS=-Wall -fPIC -O2 -msse2 -march=native
+## SIMD
+## These are for James' laptop
+CFLAGS=-Wall -fPIC -O2 -msse3 -march=native
 LDFLAGS= 
 LDLIBS= -lc -lm
 
@@ -23,7 +23,7 @@ LDLIBS= -lc -lm
 all: fht.so srht.so
 
 main: srht.c 
-	gcc -lc -lm -g -o main srht.c
+	gcc $(CFLAGS) $(LDLIBS) $(LDFLAGS) -g -o main srht.c
 
 fht.o: fht.c
 	gcc $(CFLAGS) $(LDLIBS) $(LDFLAGS) -c $<

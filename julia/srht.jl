@@ -654,7 +654,7 @@ function srht_test()
    ##k = 5; p = randperm(2^m)[1:k] # so this is one thing matlab does better...
    
    m = 14
-   x = randn(2^m, 30)
+   x = randn(2^m, 300)
    k = rand(1:2^m)
    p = randperm(2^m)[1:k] # so this is one thing matlab does better...
    println([2^m k])
@@ -669,7 +669,6 @@ function srht_test()
    @time PHx_C = srht_C(x, p)
    #Profile.clear()
    #@profile PHx = srht(x, p)
-
 
    #display(PHx_naive)
    #display(PHx_ref)
@@ -693,27 +692,27 @@ function srht_timing()
    p = randperm(2^m)[1:k] # so this is one thing matlab does better...
    println([2^m k])
 
-   n_samples = 10
-   t_fht_C = 0.0
-   t_ref = 0.0
-   t_C = 0.0
+   n_samples = 50
+   t_fht_C = zeros(n_samples,1);
+   t_ref = zeros(n_samples,1);
+   t_C = zeros(n_samples,1);
    for i=1:n_samples
       time = @timed begin
          Hx = fht_C(x)
          PHx = Hx[p,:]
       end
-      t_fht_C += time[2];
+      t_fht_C[i] = time[2];
 
       time = @timed PHx_ref = srht_ref(x, p)
-      t_ref += time[2];
+      t_ref[i] = time[2];
 
       time = @timed PHx_C = srht_C(x, p)
-      t_C += time[2];
+      t_C[i] = time[2];
    end
 
-   @printf "<t_fht_C> = %f\n" t_fht_C / n_samples
-   @printf "<t_ref>   = %f\n" t_ref / n_samples
-   @printf "<t_C>     = %f\n" t_C / n_samples
+   @printf "<t_fht_C> = %f +- %f\n" mean(t_fht_C) std(t_fht_C)
+   @printf "<t_ref>   = %f +- %f\n" mean(t_ref) std(t_ref)
+   @printf "<t_C>     = %f +- %f\n" mean(t_C) std(t_C)
 
 end
 
