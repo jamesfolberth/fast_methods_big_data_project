@@ -13,7 +13,7 @@
 
 ## SIMD
 ## These are for James' laptop
-CFLAGS=-Wall -fPIC -O2 -msse3 -march=native
+CFLAGS=-Wall -fPIC -O2 -msse2 -march=native
 LDFLAGS= 
 LDLIBS= -lc -lm
 

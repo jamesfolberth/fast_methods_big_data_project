@@ -43,7 +43,7 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
       }
 
       #if(USE_SSE) 
-      // tmp = x1 + x2 with SIMD
+      // tmp = x1 + x2 with SSE2 intrinsics
       // half is always a factor of 4, so no cleanup
       // Julia arrays are 16 byte aligned (not 32), so must use AVX unaligned load, which
       // slows things down a bit.  
@@ -73,7 +73,7 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
       }
       
       #if(USE_SSE) 
-      // tmp = x1 - x2 with SIMD
+      // tmp = x1 - x2 with SSE2 intrinsics
       // half is always a factor of 4, so no cleanup
       for ( j=0; j<n; ++j ) {
          jhalf = j*half;
@@ -127,8 +127,6 @@ void srht_rec_had(double *pPHx, double *x, unsigned m, unsigned n, unsigned L,
          x3 = x[jm+3];
          
          // transform values
-         // TODO is there any SIMD we can do here?
-         // _mm256_addsub_pd?
          Hx[0] = x0+x1+x2+x3;
          Hx[1] = x0-x1+x2-x3;
          Hx[2] = x0+x1-x2-x3;
