@@ -8,21 +8,23 @@ function [] = rsvd_exp_04()
 rng('default'); rng(0); % set generator and seed
 
 % Problem parameters
-%m = 100;
-%n = 140;
-%p = 5;
+m = 100;
+n = 140;
+p = 5;
 qvec = 4:6;
+tvec = ceil(log2(n)./qvec); % t just sufficiently large so n < 2^r == 2^(t*q)
 
 % Construct a test matrix
-%A = LOCAL_fast_decay(m,n,200);
+A = LOCAL_fast_decay(m,n,200);
 %A = LOCAL_slow_decay(m,n);
 
-S = load('mats/Kohonen.mat');
-A = S.Problem.A; [m,n] = size(A);
-qvec = 5:8; % l must be suff. large: l > r >= ceil(log2(n))
-tvec = ceil(log2(n)./qvec); % t just sufficiently large so n < 2^r == 2^(t*q)
+
+%S = load('mats/Kohonen.mat');
+%A = S.Problem.A; [m,n] = size(A);
+%qvec = 5:8; % l must be suff. large: l > r >= ceil(log2(n))
+%tvec = ceil(log2(n)./qvec); % t just sufficiently large so n < 2^r == 2^(t*q)
 %tvec(1) = 
-p = 5;
+%p = 5;
 
 % Run accuracy tests for different values of l-p with p fixed
 % The SCM matrices change here, so the Gaussian matrices do too.

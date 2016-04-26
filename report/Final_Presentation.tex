@@ -1,7 +1,6 @@
 %
 \documentclass[9pt]{beamer}
 
-
 \mode<presentation>
 {
   \usetheme{Warsaw}
@@ -321,10 +320,22 @@ Let $0< \epsilon, \delta < 1$ and $f$ be some function. It $\Omega \in \mB{R}^{n
 \end{frame}
 
 
+% RSVD
 \begin{frame}{Sampling for the RSVD}
    \begin{itemize}
       \item We implemented dual BCH codes in {\sc matlab} using tools from the Communications Systems toolbox.\\
-      \item We only need the encoder; the decoder is much more complicated.
+      \item We only need an encoder; decoders are more complicated.
+      \item \texttt{LOCAL\_fast\_decay}: $100\times 140$.
+   \end{itemize}
+   
+   \begin{center}
+      \includegraphics[width=\textwidth]{figures/fast_decay_rsvd_compare_trim.pdf}
+   \end{center}
+\end{frame}
+
+\begin{frame}{Sampling for the RSVD}
+   \begin{itemize}
+      \item \texttt{Kohonen.mat}: $4470\times 4470$, an adjacency matrix for directed graph.
    \end{itemize}
    
    \begin{center}
