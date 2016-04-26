@@ -1,5 +1,5 @@
 %
-\documentclass[8pt]{beamer}
+\documentclass[9pt]{beamer}
 
 
 \mode<presentation>
@@ -14,7 +14,7 @@
 
 %\usepackage{times}
 \usepackage[english]{babel}
-\usepackage[latin1]{inputenc}
+%\usepackage[latin1]{inputenc}% this doesn't play well with lualatex
 \usepackage{graphicx}
 \usepackage{media9}
     \usepackage[all]{xy}
@@ -78,6 +78,7 @@
 
 \title{Low Rank Factorization Using Error Correcting Codes}
 \author[]{James Folberth and Jessica Gronski }
+\date{26 April, 2016}
 
 \begin{frame}
 \titlepage
@@ -140,7 +141,7 @@
 \end{center}
 \end{itemize}
 
-\item To encode $r$ bits, we require $2^r$ unique codewords.
+\item To encode $r$ bits, we require $2^r$ unique and well separated codewords.
 
 \end{itemize}
 \end{frame}
@@ -157,7 +158,11 @@
 \[ \tilde{\textbf{c}} = (c_{n-1}, c_0, c_1, \hdots, c_{n-2}) \in C, \] \cite{hall2003notes}.
 \vspace{4mm}
 
-\item For any two integers $t$ and $q$, a BCH code over $\mB{F}_2$ has length $\ell = 2^q -1$ and dimension $r = 2^q -1- tq$.
+% This actually isn't true.
+%\item For any two integers $t$ and $q$, a BCH code over $\mB{F}_2$ has length $\ell = 2^q -1$ and dimension $r = 2^q -1- tq$.a
+% I think GF(2) is more understandable than F_2
+\item For any integers $q$ and $t$, with $t$ ``small'', a BCH code over $\mathbf{GF}(2) \sim \mathbb{Z}/2\mathbb{Z}$ has length $\ell = 2^q -1$ and dimension $r = 2^q -1- tq$.
+%TODO is this dimension r == message length r?
 \vspace{4mm}
 
 \item Any two codewords maintain a minimum Hamming distance of $2t + 1$.
@@ -170,10 +175,11 @@
 \begin{frame}
 \frametitle{Connection to Randomized Methods} 
 \begin{itemize} 
-\item In class, we've discussed randomized methods including Subsampled Random Fourier and Hadamard Transforms (SRFT and SRHT, resp.)
+   %TODO did we talk about the SRHT in class?  Most may not remember it, so we'll introduce it later
+   \item In class, we've discussed randomized methods including the subsampled random Fourier Transform (SRFT).
 \vspace{4mm}
 
-\item Ubaru et al. \cite{ubaru2015low} propose using error correcting codes to find low rank approximations in a manner similar to SRF/HT.
+\item Ubaru et al. \cite{ubaru2015low} propose using error correcting codes to find low rank approximations in a manner similar to SRFT.
 \vspace{4mm}
 
 \end{itemize}
@@ -212,7 +218,7 @@
 \begin{frame}
 \frametitle{Subsampled Code Matrix} 
 \begin{itemize} 
-\item Form the Subsampling Code Matrix as:
+   \item Form the Subsampled Code Matrix (SCM) as:
 \[ \Omega_{n \times \ell} = \sqrt{ \frac{2^r}{\ell}} D_{n \times n} S_{n \times 2^r} \Phi_{2^r \times \ell} \]
 where
 
@@ -313,13 +319,81 @@ Let $0< \epsilon, \delta < 1$ and $f$ be some function. It $\Omega \in \mB{R}^{n
 \item Any SCM $\Omega$ with a dual distance $> 4$ will also satisfy the subspace embedding property. This shows SCM matrices can preserve the geometry of the top $k$-singular vectors of input matrix $A$.
 \end{itemize}
 \end{frame}
-	
-%Comparison and Results
-\begin{frame}
+
+
+\begin{frame}{Sampling for the RSVD}
+   \begin{itemize}
+      \item We implemented dual BCH codes in {\sc matlab} using tools from the Communications Systems toolbox.\\
+      \item We only need the encoder; the decoder is much more complicated.
+   \end{itemize}
+   
+   \begin{center}
+      \includegraphics[width=\textwidth]{figures/kohonen_rsvd_compare_trim.pdf}
+   \end{center}
+\end{frame}
+
+
+% SRHT
+\begin{frame}{The Hadamard Transform}
+   The (naturally ordered) Hadamard transform is defined recursively for sizes $d=2^L$:
+
+   \[ H_1 = \begin{bmatrix}1 &1\\1&-1\end{bmatrix}. \] 
+   
+   \[ H_d = \begin{bmatrix} H_{d/2} & H_{d/2}\\H_{d/2} & -H_{d/2}\end{bmatrix}. \] 
+   
+   \noindent Using this recursion, we have a fast algorithm (similar to FFT and Haar wavelet).\\
+   \noindent Runtime is $\mathcal{O}(d\log d)$.\\[2em]
+   
+   \begin{theorem}
+      Every column of the $2^r\times \ell$ code matrix $\Phi$ (after BPSK mapping) is equal to some column of the $2^r\times 2^r$ Hadamard matrix.
+   \end{theorem}
+   
+   So, we can apply the SCM in $\mathcal{O}(d\log d)$ time.
+\end{frame}
+
+\begin{frame}{Recursive SRHT}
+   Like the SRFT, we can define an SRHT as $P_kH_dx$.  Unfortunately, no one has actually implemented and published an SRHT!\\
+   \noindent Na\"ive subsampling costs $\mathcal{O}(d\log d)$, independent of the number of subsamples $k$.\\[2em]
+
+
+   By splitting $P_kH_dx$, we find an efficient algorithm for the SRHT \cite{ailon2009fast}:
+
+   \[ P_kH_dx = \begin{bmatrix}P_{k_1}&P_{k_2}\end{bmatrix}\begin{bmatrix}H_{d/2}&H_{d/2}\\H_{d/2}&-H_{d/2}\end{bmatrix}\begin{bmatrix}x_1\\x_2\end{bmatrix} = P_{k_1}H_{d/2}(x_1+x_2) + P_{k_2}H_{d/2}(x_1-x_2). \] 
+
+   \noindent It can be shown that this runs in $\mathcal{O}(d\log k)$ time, which is an improvement over the na\"ive $\mathcal{O}(d\log d)$.
 
 \end{frame}
 
+\begin{frame}{SRHT scaling}
+    Reference {\sc matlab} implementations:\\
+
+   \begin{center}
+      \includegraphics[width=\textwidth]{figures/srht_matlab_ref_k_scaling_trim.pdf}
+   \end{center}
+\end{frame}
+
+\begin{frame}{SRHT scaling}
+    Reference Julia implementations:\\
+
+   \begin{center}
+      \includegraphics[width=\textwidth]{figures/srht_julia_ref_k_scaling.pdf}
+   \end{center}
+\end{frame}
+
+\begin{frame}{SRHT scaling}
+   Optimized C+SSE2 implementations:\\
+
+   \begin{center}
+      \includegraphics[width=\textwidth]{figures/srht_C_k_scaling.pdf}
+   \end{center}
+\end{frame}
+
+
 \begin{frame}[allowframebreaks]{Bibliography}
+   
+   Our code is online at\\
+   {\small\url{https://github.com/jamesfolberth/fast_methods_big_data_project}}.\\
+
 \bibliographystyle{abbrv}
 \bibliography{presentation_bib}
 

@@ -14,3 +14,7 @@ report/*.blg
 report/*.log
 report/*.synctex.gz
 report/*.pdf
+report/*.nav
+report/*.out
+report/*.snm
+report/*.toc
