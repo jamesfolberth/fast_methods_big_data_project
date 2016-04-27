@@ -19,6 +19,7 @@
 \usepackage{mathrsfs}
 \usepackage[margin=1in]{geometry}
 
+\usepackage{parskip}
 
 %For the lazy:
 \newcommand{\ds}{\displaystyle}
@@ -35,6 +36,7 @@
 \begin{document}
 \flushleft
 
+\centerline{\large \bf Low Rank Factorization Using Error Correcting Codes}
 \centerline{\large \bf APPM 5720 Final Project}
 \vspace{\baselineskip}
 {\large \centerline{James Folberth and Jessica Gronski}}
@@ -69,13 +71,64 @@ where
 \end{itemize}
 Recall that the codeword matrix $C$ has $2^r$ codewords each of length $\ell$, i.e. a set of $2^r$ vectors in $\{0,1\}^{\ell}$. The BPSK mapping is defined as follows: given a codeword $\tbf{c} \in C$, $\tbf{c} \mapsto \phi \in \mB{R}$ by assigning $1 \rightarrow \frac{-1}{\sqrt{2^r}}$ and $0 \rightarrow \frac{1}{\sqrt{2^r}}$. This way, we transform the binary code matrix $C$ to the code matrix $\Phi = (\phi_1^T,  \hdots \phi_{2^r}^T) ^T$ \cite{ubaru2015low}. Moreover, it can be shown that if the dual distance is greater than or equal to 3, $\Phi$ will have orthonormal columns. The scaling factor $\sqrt{\frac{2^r}{\ell}}$ enforces the rows of $\Omega$ to also have unit length.
 
+%TODO basically just need to type up the algorithm.  The sampling matrix is a "plugin"
 \section{Prototype Algorithm}
 The algorithm provided by Ubaru et al. in \cite{ubaru2015low} 
 
 
+\section{RSVD Experiments}
+We implemented sampling with dual BCH code matrices using various tools from the {\sc matlab} Communications System Toolbox \cite{matlab_cst_2015}.  The toolbox provides a primal BCH encoder in {\sc matlab} script.  The main operation in encoding is simulating a shift register, which is vectorized.  The toolbox also provides a function, \texttt{bchgenpoly}, which generates a vector over $\mathbb{F}_2$ that represents the generating polynomial, $F_p(x)$, for the primal BCH code.  The dual generating polynomial is 
 
- \bibliography{final_bib}
- \bibliographystyle{plain}
+\[ F_d(x) = \dfrac{x^l+1}{F_p(x)}, \] 
+
+\noindent where the remainder is $0$ \cite{hall2003notes}.  Polynomial division over $\mathbb{F}_2$ is (thankfully) implemented in \texttt{deconv}, which is provided in the Communications System Toolbox.  Once we have the dual generating polynomial, we may borrow the shift register from the primal BCH encoder, and we have a functioning dual BCH encoder.
+
+To compute the sampling matrix $\Omega$, we draw $n$ Rademacher variables to form $D$, and draw the indices of the subsampling matrix $S$.  We then compute a $n\times r$ message matrix with each row a binary vector corresponding to the decimal index from $S$.  Finally, we compute the $n\times \ell$ subsampled code matrix $S\Phi$ by encoding the message matrix with the dual BCH encoder.  To be clean, we are forming the subsampled code matrix, and use BLAS to apply it to the data matrix $A$.  We will see in the next section a method of efficiently sampling $A$ with the SRHT.
+
+For the first experiment, we compare various sampling methods for the RSVD with oversampling parameter $p=5$ and $q=0$ power iterations.  We use the matrix \verb|LOCAL_fast_decay(100,140,200)|, which was used frequently in our homeworks.  Figure \ref{fig:rsvd_compare_fast} shows the spectral and Frobenius norms for the various sampling methods.  We can see that sampling with dual BCH code matrices are competitive with Gaussian matrices and the SRFT.  If we use $q=1$ or more power iterations, we are not able to resolve any differences between the sampling methods.
+
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.9\textwidth]{figures/fast_decay_rsvd_compare_trim.pdf}
+   \caption{RSVD with various sampling methods on \texttt{LOCAL\_fast\_decay(100,140,200)}.}
+   \label{fig:rsvd_compare_fast}
+\end{figure}
+
+As a second experiment with the RSVD, we attempt to recreate one result from \cite{ubaru2015low}.  They selected the matrix \texttt{Kohonen.mat}, an adjacency matrix for a directed graph, from the UFL sparse matrix collection \cite{ufl_smc}.  Figure \ref{fig:rsvd_compare_kohonen} shows the spectral and Frobenius norm errors, again with oversampling $p=5$ and $q=0$ power iterations.  Notice that the singular values of \texttt{Kohonen.mat} do \emph{not} decay quickly, and so the RSVD is not accurate, regardless of sampling.  Nevertheless, dual BCH codes performed slightly better than the SRFT and Gaussian matrices.
+
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.9\textwidth]{figures/kohonen_rsvd_compare_trim.pdf}
+   \caption{RSVD with various sampling methods on \texttt{Kohonen.mat} from \cite{ufl_smc}.}
+   \label{fig:rsvd_compare_kohonen}
+\end{figure}
+
+One downside to sampling with dual BCH code matrices is the restriction of $\ell$ to $\ell=2^q-1$.  If we have a target rank of $k=100$, we must pick $p=27$ which gets us to the nearest admissible code length of $\ell=127$.  This does add a bit of work, but is offset by the existence of a fast multiplication via the SRHT, discussed in the following section.
+
+
+%TODO James will do this
+\section{An efficient SRHT}
+The naturally ordered (Walsh-)Hadamard transform is structured orthogonal transform inspired by the DFT and Haar wavelet transforms.  Neglecting normalization, it can be defined recursively for sizes $d=2^r$ as
+
+\begin{equation}
+\label{eq:had_rec}
+H_1 = \begin{bmatrix}1 & 1\\1 & -1\end{bmatrix}, \quad H_d = \begin{bmatrix}H_{d/2}&H_{d/2}\\H_{d/2}&-H_{d/2}\end{bmatrix}.
+\end{equation}
+
+   \noindent Using this recursion, we also have a fast algorithm for computing the transform of a vector (or matrix, column-wise).  Notice that each Hadamard matrix $H_d$ has $\pm 1$ entries.  Recall that after the BPSK mapping, the primal and dual BCH code matrices also have $\pm 1$ entries.  In \cite{ailon2009fast} it was shown that every row of the $2^r\times \ell$ code matrix $\Phi$ is equal to some row of the $2^r\times 2^r$ Hadamard matrix, up to some normalization.  Therefore, if we do some preprocessing to determine the row subset selection for the Hadamard transform, we can use the subsampled Hadamard transform to compute sampling with subsampled dual BCH code matrices and so sampling with dual BCH codes enjoys a fast transform, just like the SRFT and SRHT.
+
+   The recursive definition of the naturally ordered Hadamard transform (\ref{eq:had_rec}) leads naturally to an $\mathcal{O}(d\log d)$ implementation.%TODO move to O(d\log k), figures.
+
+
+
+%TODO James can do this
+\section{Discussion}
+
+
+
+
+\bibliography{final_bib}
+\bibliographystyle{siam}
  
 \end{document} % every document must end with this.
 
@@ -94,6 +147,8 @@ The algorithm provided by Ubaru et al. in \cite{ubaru2015low}
 
 
 
+%fast_decay_rsvd_compare_trim.pdf  srht_C_k_scaling.pdf      srht_matlab_ref_k_scaling_trim.pdf
+%kohonen_rsvd_compare_trim.pdf   srht_julia_ref_k_scaling.pdf
 
 
 

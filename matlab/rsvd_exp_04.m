@@ -7,24 +7,31 @@ function [] = rsvd_exp_04()
 
 rng('default'); rng(0); % set generator and seed
 
-% Problem parameters
-m = 100;
-n = 140;
-p = 5;
-qvec = 4:6;
-tvec = ceil(log2(n)./qvec); % t just sufficiently large so n < 2^r == 2^(t*q)
-
-% Construct a test matrix
-A = LOCAL_fast_decay(m,n,200);
+%% Problem parameters
+%m = 100;
+%n = 140;
+%p = 5;
+%qvec = 4:6;
+%tvec = ceil(log2(n)./qvec); % t just sufficiently large so n < 2^r == 2^(t*q)
+%
+%% Construct a test matrix
+%%A = LOCAL_fast_decay(m,n,200);
 %A = LOCAL_slow_decay(m,n);
 
+n = 512;
+p = 5;
+qvec = 5:8;
+tvec = ceil(log2(n)./qvec); % t just sufficiently large so n < 2^r == 2^(t*q)
+A = devils_stairs(n);
 
-%S = load('mats/Kohonen.mat');
+%%S = load('mats/Kohonen.mat');
+%S = load('mats/pcb3000.mat');
 %A = S.Problem.A; [m,n] = size(A);
 %qvec = 5:8; % l must be suff. large: l > r >= ceil(log2(n))
 %tvec = ceil(log2(n)./qvec); % t just sufficiently large so n < 2^r == 2^(t*q)
-%tvec(1) = 
 %p = 5;
+
+power_its = 0;
 
 % Run accuracy tests for different values of l-p with p fixed
 % The SCM matrices change here, so the Gaussian matrices do too.
@@ -65,7 +72,7 @@ for j = 1:numel(qvec)
    G = randn(n,l); 
 
 	% Gaussian with 0 power its
-   [U,D,V] = rsvd(A,k+p,k,G);
+   [U,D,V] = rsvd(A,k+p,k,G,power_its);
   	err_gauss(j)  = normest(A - U*D*V');
   	err_gauss_f(j) = norm(A - U*D*V','fro');
 	
@@ -83,7 +90,7 @@ for j = 1:numel(qvec)
    G_dbch = @(A,l) dbch_sampler(A,l,q,t,rad,scm_sub(1:n));
 
 	% dual BCH with 0 power its
-   [U,D,V] = rsvd(A,k+p,k,G_dbch);
+   [U,D,V] = rsvd(A,k+p,k,G_dbch,power_its);
   	err_dbch(j)  = normest(A - U*D*V');
   	err_dbch_f(j) = norm(A - U*D*V','fro');
    
@@ -91,7 +98,7 @@ for j = 1:numel(qvec)
    dd = exp(1i*2*pi*rand(1,n));
    [~,ind] = sort(rand(1,n));
    G_srft = @(A,l) srft_sampler(A,l,dd,ind);
-   [U,D,V] = rsvd(A,l,k,G_srft);
+   [U,D,V] = rsvd(A,l,k,G_srft,power_its);
    err_srft(j) = normest(A-U*D*V');
    err_srft_f(j) = norm(A-U*D*V','fro');
    
@@ -99,7 +106,7 @@ for j = 1:numel(qvec)
    rad = -2*randi([0 1],n,1) + 1;
    [~,ind] = sort(rand(1,n));
    G_srht = @(A,l) srht_sampler(A,l,rad,ind);
-   [U,D,V] = rsvd(A,l,k,G_srht);
+   [U,D,V] = rsvd(A,l,k,G_srht,power_its);
    err_srht(j) = normest(A-U*D*V');
    err_srht_f(j) = norm(A-U*D*V','fro');
 
@@ -126,7 +133,7 @@ axis([0,kvec(end),ss(kvec(end)+1),ss(1)])
 xlabel('k')
 ylabel('||A - A_k||')
 legend('svd','Gaussian','dual BCH','SRFT','SRHT')
-title('Spectral norm errors (q=0)')
+title(sprintf('Spectral norm errors (q=%d)', power_its))
 subplot(1,2,2)
 hold off
 semilogy(0:(length(ss)-1),ssf,'k-',...
@@ -139,7 +146,7 @@ xlabel('k')
 ylabel('||A - A_k||')
 axis([0,kvec(end),ssf(kvec(end)+1),ssf(1)])
 legend('svd','Gaussian','dual BCH','SRFT','SRHT')
-title('Frobenius norm errors (q=0)')
+title(sprintf('Frobenius norm errors (q=%d)', power_its))
 
 end
 
@@ -210,3 +217,16 @@ A       = U * diag(ss) * V';
 
 end
 
+
+function A = devils_stairs(n)
+length = 20;
+s = zeros(n,1);
+Nst = floor(n/length);
+for i=1:Nst
+   s(1+length*(i-1):length*i) = -0.6*(i-1);
+end
+s(length*Nst:end) = -0.6*(Nst-1);
+s = 10.^s;
+A = orth(randn(n))*diag(s)*orth(randn(n));
+
+end
