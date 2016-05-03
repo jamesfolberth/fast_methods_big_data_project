@@ -45,7 +45,7 @@
 \vspace{\baselineskip}
 
 \section{Introduction}
-In recent years, randomized techniques have gained a significant amount of attention for their simplicity and ability to efficiently generate low rank approximations of large matrices. We have discussed several randomized methods in class including the Subsampled Random Fourier and Hadamard Transforms (SRFT and SRHT, respectively). Ubaru et al. \cite{ubaru2015low} propose using error correcting codes to find low rank approximations and matrix factorizations of large matrices in a manner similar to SRFT/HT. The goal of our project is to compare their proposed method with those discussed in class for face recognition. 
+In recent years, randomized techniques have gained a significant amount of attention for their simplicity and ability to efficiently generate low rank approximations of large matrices. We have discussed several randomized methods in class including the Subsampled Random Fourier and Hadamard Transforms (SRFT and SRHT, respectively). Ubaru et al. \cite{ubaru2015low} propose using error correcting codes as sampling operators for the RSVD, much like the SRFT and SRHT.  Our aim for the project is to implement their ideas and compare it to other sampling methods we saw in class.
 
 \section{Error Correcting Codes}
 In what follows, we give a brief overview of error correcting codes and the subspace embedding properties they satisfy. In communication systems, data are transmitted from a source (transmitter) to a destination (receiver) through physical channels. These channels are usually noisy, causing errors in the data received \cite{ubaru2015low}, and so error correcting codes were designed to help remedy this issue. BCH codes, named after  Bose, Chaudhuri, and Hocquenghem, are of specific importance for their rich structure, ability to correct multiple bit errors and ease of decoding a transmitted message. They form a class of cyclic codes; if \tbf{c} is a codeword in the linear code space $C$, then \tbf{$\tilde{c}$} is also in $C$ where \tbf{$\tilde{c}$} is a cyclic shift of \tbf{c}. 
@@ -76,7 +76,7 @@ Recall that the codeword matrix $C$ has $2^r$ codewords each of length $\ell$, i
 
 %TODO basically just need to type up the algorithm.  The sampling matrix is a "plugin"
 \section{Prototype Algorithm}
-The algorithm provided by Ubaru et al. in \cite{ubaru2015low} :
+The RSVD algorithm provided by Ubaru et al. in \cite{ubaru2015low} :
 
 \textbf{Algorithm 1} Prototype Algorithm \\
 \vspace{4mm}
@@ -149,14 +149,14 @@ One downside to sampling with dual BCH code matrices is the restriction of $\ell
 
 
 \section{An efficient SRHT}
-The naturally ordered (Walsh-)Hadamard transform is structured orthogonal transform inspired by the DFT and Haar wavelet transforms.  Neglecting normalization, it can be defined recursively for sizes $d=2^r$ as
+The naturally ordered (Walsh-)Hadamard transform is a structured orthogonal transform inspired by the DFT and Haar wavelet transforms.  Neglecting normalization, it can be defined recursively for sizes $d=2^r$ as
 
 \begin{equation}
 \label{eq:had_rec}
 H_1 = \begin{bmatrix}1 & 1\\1 & -1\end{bmatrix}, \quad H_d = \begin{bmatrix}H_{d/2}&H_{d/2}\\H_{d/2}&-H_{d/2}\end{bmatrix}.
 \end{equation}
 
-   \noindent Using this recursion, we also have a fast algorithm for computing the transform of a vector (or matrix, column-wise).  Notice that each Hadamard matrix $H_d$ has $\pm 1$ entries.  Recall that after the BPSK mapping, the primal and dual BCH code matrices also have $\pm 1$ entries.  In \cite{ailon2009fast} it was shown that every row of the $2^r\times \ell$ code matrix $\Phi$ is equal to some row of the $2^r\times 2^r$ Hadamard matrix, up to some normalization.  Therefore, if we do some offline preprocessing to determine the proper row subsampling for the Hadamard transform, we can use the subsampled Hadamard transform to compute sampling with subsampled dual BCH code matrices and so sampling with dual BCH codes enjoys a fast transform, just like the SRFT and SRHT.
+   \noindent Using this recursion \cite{ailon2009fast}, we also have a fast algorithm for computing the transform of a vector (or matrix, column-wise).  Notice that each Hadamard matrix $H_d$ has $\pm 1$ entries.  Recall that after the BPSK mapping, the primal and dual BCH code matrices also have $\pm 1$ entries.  In \cite{ailon2009fast} it was shown that every row of the $2^r\times \ell$ code matrix $\Phi$ is equal to some row of the $2^r\times 2^r$ Hadamard matrix, up to some normalization.  Therefore, if we do some offline preprocessing to determine the proper row subsampling for the Hadamard transform, we can use the subsampled Hadamard transform to compute sampling with subsampled dual BCH code matrices and so sampling with dual BCH codes enjoys a fast transform, just like the SRFT and SRHT.
 
    The recursive definition of the naturally ordered Hadamard transform (\ref{eq:had_rec}) leads naturally to an $\mathcal{O}(d\log d)$ implementation, by computing the full length $d$ transform and then subsampling to, say, $k$ indexes.  However, we can do better, although it seems that no one has implemented and made publicly available a smarter transform.
    
@@ -199,7 +199,7 @@ In each figure, we compute compute the transform for a few values of the transfo
 \section{Discussion}
 Ubaru et al. experimented with using subsampled dual BCH code matrices as sampling matrices for the RSVD \cite{ubaru2015low}.  In addition to having nice theoretical properties, dual BCH code matrices admit a fast multiplication operation via the SRHT and enjoy performance on par with Gaussian and SRFT sampling operators.
 
-We also implemented Ailon and Liberty's SRHT algorithm \cite{ailon2009fast}, which has complexity $\mathcal{O}(d\log k)$.  To our knowledge, this is the first publicly available implementation of the SRHT that has this complexity, instead of the simple SRHT, which has complexity $\mathcal{O}(d\log d)$.  Time permitting over the summer, we may clean up, document, and publish our SRHT code under an open source license for others to use.
+We also implemented Ailon and Liberty's SRHT algorithm \cite{ailon2009fast}, which has complexity $\mathcal{O}(d\log k)$.  To our knowledge, this is the first publicly available implementation of the SRHT that has this complexity, instead of the simple SRHT, which has complexity $\mathcal{O}(d\log d)$.  Time permitting, we may clean up, document, and publish our SRHT code under an open source license for others to use.  To achieve fast multiplication of dual BCH code matrices, one can do some offline preprocessing and use the SRHT for the multiplication.
 
 \newpage 
 
@@ -207,7 +207,4 @@ We also implemented Ailon and Liberty's SRHT algorithm \cite{ailon2009fast}, whi
 \bibliographystyle{siam}
  
 \end{document} % every document must end with this.
-
-%fast_decay_rsvd_compare_trim.pdf  srht_C_k_scaling.pdf      srht_matlab_ref_k_scaling_trim.pdf
-%kohonen_rsvd_compare_trim.pdf   srht_julia_ref_k_scaling.pdf
 
