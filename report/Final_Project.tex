@@ -19,7 +19,6 @@
 \usepackage{mathrsfs}
 \usepackage[margin=1in]{geometry}
 \usepackage{hyperref}
-
 \usepackage{parskip}
 
 %For the lazy:
@@ -28,11 +27,13 @@
 \newcommand{\ti}{\textit}
 \newcommand{\mC}{\mathcal}
 \newcommand{\mB}{\mathbb}
-
 \newcommand{\mrm}{\mathrm}
 \newcommand{\dds}[2]{\frac{\mathrm{d}#2}{\mathrm{d}#1}} %(d1 BY d2)
 \newcommand{\ddb}[2]{\frac{\mathrm{d}}{\mathrm{d}#1}\left[ #2\right]}
 %(d by d1 OF 2)
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
 
 \begin{document}
 \flushleft
@@ -75,7 +76,46 @@ Recall that the codeword matrix $C$ has $2^r$ codewords each of length $\ell$, i
 
 %TODO basically just need to type up the algorithm.  The sampling matrix is a "plugin"
 \section{Prototype Algorithm}
-The algorithm provided by Ubaru et al. in \cite{ubaru2015low} 
+The algorithm provided by Ubaru et al. in \cite{ubaru2015low} :
+
+\textbf{Algorithm 1} Prototype Algorithm \\
+\vspace{4mm}
+
+\textbf{Input:} An $m \times n$ matrix $A$, a target rank $k$. \\
+\textbf{Output:} Rank-$k$ factors $U$, $\Sigma$ and $V$ in an approximate SVD $A \approx U \Sigma V^T$. 
+
+\begin{enumerate}
+ \item Form an $n \time \ell$ subsampled code matrix $\Omega$, as described above using an $[\ell,r]$-linear coding scheme, where $\ell > k$ and $r \ge \lceil \log_2 n \rceil.$ 
+
+ \item Form the $m \times \ell$ sample matrix $Y = A\Omega$.
+ \item Form an $m \times \ell$ orthogonal matrix $Q$ such that $Y = QR$. 
+\item Form the $\ell \times n$ matrix $B = Q^T A$.
+\item Compute the SVD of the small matrix $B = \hat{U} \Sigma V^T$.
+\item Form the matrix $U = Q \hat{U}.$
+\end{enumerate}
+
+\vspace{3mm}
+
+A drawback to the algorithm is that it requires the singular values of the input matrix to decay rapidly for a good approximation.  Similar to other randomized techniques, the Prototype Algorithm applies a unitary transform to reduce the coherence of an input matrix $A$; this in turn allows for an effective subsampling. Moreover, dual BCH code matrices share similar structured properties to the Subsampled Random Hadamard Transform. A key advantage of using structured matrices (SRHT or SRFT) in randomized sketching algorithms is that we can compute the  matrix-matrix products $Y = A \Omega$ in $O(m n \log_2 \ell)$ time exploiting the structure of Hadamard/Fourier matrices. For a general dense input matrix in RAM, the total computational cost of Algorithm 1 using Subsampled Code Matrices is $O(mn \log_2 \ell + (m + n) k^2)$ \cite{ubaru2015low}. 
+
+\subsection{Subsampled Code Matrices, Johnson Lindenstrauss Transform and Subspace Embedding}
+
+Much of this subsection is taken directly from \cite{ubaru2015low}. For more details or proofs of what follows, please refer to Ubaru et. al \cite{ubaru2015low}. 
+
+\vspace{3mm}
+
+In order to satisfy the $(1 + \epsilon)$ error bound, we require SCMs to satisfy the two key properties: JLT and subspace embedding. The first property is a result given by Clarkson and Woodruff in \cite{clarkson2009numerical}. They show that error correcting dual BCH codes with with more than 2 error correcting ability will satisfy the JLT property. This is achieved when the dual distance of the BCH code is greater than 4. In order to show that SCMs satisfy the subspace embedding property, we use the following lemma:
+
+\vspace{3mm}
+
+\begin{lemma}
+Let $0 < \epsilon, \delta < 1$ and $f$ be some function. If $\Omega \in \mB{R}^{n \times \ell}$ satisfies a JLT $(\epsilon, \delta, d)$ with $\ell = O(k \log(k/ \epsilon) / \epsilon^2 . f(\delta))$, then for any orthonormal matrix $V \in \mB{R}^{n \times k}, n \ge k$ we have 
+
+\[ \textbf{Pr}( || V^T \Omega \Omega^T V - I ||_2 \le \epsilon) \ge 1 - \delta.\]
+\end{lemma}
+
+Thus, any sampling matrix $\Omega$ satisfying JLT, that is with dual distance greater than 4, and having length $\ell  = O(k \log(k / \epsilon) / \epsilon^2)$ satisfies the subspace embedding property. This result shows that SCM matrices can preserve the geometry of the top $k$-singular vectors of the input matrix $A$.
+
 
 
 \section{RSVD Experiments}
@@ -160,6 +200,8 @@ In each figure, we compute compute the transform for a few values of the transfo
 Ubaru et al. experimented with using subsampled dual BCH code matrices as sampling matrices for the RSVD \cite{ubaru2015low}.  In addition to having nice theoretical properties, dual BCH code matrices admit a fast multiplication operation via the SRHT and enjoy performance on par with Gaussian and SRFT sampling operators.
 
 We also implemented Ailon and Liberty's SRHT algorithm \cite{ailon2009fast}, which has complexity $\mathcal{O}(d\log k)$.  To our knowledge, this is the first publicly available implementation of the SRHT that has this complexity, instead of the simple SRHT, which has complexity $\mathcal{O}(d\log d)$.  Time permitting over the summer, we may clean up, document, and publish our SRHT code under an open source license for others to use.
+
+\newpage 
 
 \bibliography{final_bib}
 \bibliographystyle{siam}
